@@ -14,7 +14,7 @@ permissions:
 
 env:
   PROJECT_ID: vprofile-469703
-  WORKLOAD_IDENTITY_PROVIDER: projects/vprofile-469703/locations/global/workloadIdentityPools/github-pool-v2/providers/github-provider
+  WORKLOAD_IDENTITY_PROVIDER: projects/175989535992/locations/global/workloadIdentityPools/github-pool-v2/providers/github-provider
   SERVICE_ACCOUNT: github-actions-sa@vprofile-469703.iam.gserviceaccount.com
 
 jobs:
