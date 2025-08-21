@@ -1,0 +1,183 @@
+name: Terraform GKE Deployment
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * *"  # Daily drift check at 3 AM UTC
+
+env:
+  PROJECT_ID: vprofile-469703
+  WORKLOAD_IDENTITY_PROVIDER: projects/vprofile-469703/locations/global/workloadIdentityPools/github-pool-v2/providers/github-provider
+  SERVICE_ACCOUNT: github-actions-sa@vprofile-469703.iam.gserviceaccount.com
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      # Checkout repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Authenticate with Google Cloud using OIDC
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Setup gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Initialize Terraform with remote backend
+      - name: Terraform Init
+        run: terraform init
+
+      # Check Terraform formatting
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      # Validate Terraform configuration
+      - name: Terraform Validate
+        run: terraform validate
+
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: lint
+    steps:
+      # Checkout repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Authenticate with Google Cloud using OIDC
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Setup gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Cache Terraform providers
+      - name: Cache Terraform
+        uses: actions/cache@v4
+        with:
+          path: .terraform
+          key: terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+
+      # Initialize Terraform with remote backend
+      - name: Terraform Init
+        run: terraform init
+
+      # Generate Terraform execution plan
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      # Upload plan artifact for apply job
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: tfplan
+          retention-days: 1
+
+  apply:
+    name: Apply
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      # Checkout repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Authenticate with Google Cloud using OIDC
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Setup gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Cache Terraform providers
+      - name: Cache Terraform
+        uses: actions/cache@v4
+        with:
+          path: .terraform
+          key: terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+
+      # Initialize Terraform with remote backend
+      - name: Terraform Init
+        run: terraform init
+
+      # Generate and apply Terraform plan
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      # Apply Terraform changes
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+  drift-check:
+    name: Drift Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      # Checkout repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Authenticate with Google Cloud using OIDC
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Setup gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Initialize Terraform with remote backend
+      - name: Terraform Init
+        run: terraform init
+
+      # Check for infrastructure drift
+      - name: Terraform Plan (Drift Check)
+        run: terraform plan -detailed-exitcode
