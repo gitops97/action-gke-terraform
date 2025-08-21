@@ -8,6 +8,10 @@ on:
   schedule:
     - cron: "0 3 * * *"  # Daily drift check at 3 AM UTC
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   PROJECT_ID: vprofile-469703
   WORKLOAD_IDENTITY_PROVIDER: projects/vprofile-469703/locations/global/workloadIdentityPools/github-pool-v2/providers/github-provider
