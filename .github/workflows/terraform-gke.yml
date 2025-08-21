@@ -7,6 +7,7 @@ on:
     branches: [main]
   schedule:
     - cron: "0 3 * * *"  # Daily drift check at 3 AM UTC
+  workflow_dispatch:  # Manual trigger for destroy operations
 
 permissions:
   id-token: write
@@ -151,6 +152,48 @@ jobs:
       # Apply Terraform changes
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+
+  destroy:
+    name: Destroy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && vars.DESTROY_ENABLED == 'true'
+    environment: production
+    steps:
+      # Checkout repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      # Authenticate with Google Cloud using OIDC
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Setup gcloud CLI
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Cache Terraform providers
+      - name: Cache Terraform
+        uses: actions/cache@v4
+        with:
+          path: .terraform
+          key: terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+
+      # Initialize Terraform with remote backend
+      - name: Terraform Init
+        run: terraform init
+
+      # Destroy Terraform infrastructure
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
 
   drift-check:
     name: Drift Check
