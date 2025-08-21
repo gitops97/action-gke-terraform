@@ -39,7 +39,7 @@ resource "google_compute_subnetwork" "subnet" {
 # GKE Cluster
 resource "google_container_cluster" "primary" {
   name     = var.cluster_name
-  location = "${var.region}-a"  # Single zone instead of region
+  location = "${var.region}-a" # Single zone instead of region
 
   remove_default_node_pool = true
   initial_node_count       = 1
@@ -85,14 +85,12 @@ resource "google_compute_router_nat" "nat" {
 # Node Pool
 resource "google_container_node_pool" "primary_nodes" {
   name       = "${var.cluster_name}-node-pool"
-  location   = "${var.region}-a"  # Single zone
+  location   = "${var.region}-a" # Single zone
   cluster    = google_container_cluster.primary.name
-  node_count = 1  # Fixed to 1 node
-
-  # Remove autoscaling for minimal setup
+  node_count = 1                 # Fixed to 1 node
 
   node_config {
-    machine_type = "e2-micro"  # Smallest machine type
+    machine_type = "e2-micro" # Smallest machine type
     disk_size_gb = 10
     disk_type    = "pd-standard"
 
