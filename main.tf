@@ -43,6 +43,7 @@ resource "google_container_cluster" "primary" {
 
   remove_default_node_pool = true
   initial_node_count       = 1
+  deletion_protection      = false
 
   network    = google_compute_network.vpc.name
   subnetwork = google_compute_subnetwork.subnet.name
@@ -87,7 +88,7 @@ resource "google_container_node_pool" "primary_nodes" {
   node_count = 1
 
   node_config {
-    machine_type = "e2-micro"
+    machine_type = "e2-small"
     disk_size_gb = 10
     disk_type    = "pd-standard"
 
