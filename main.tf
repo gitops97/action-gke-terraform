@@ -82,10 +82,10 @@ resource "google_compute_router_nat" "nat" {
 
 # Node Pool
 resource "google_container_node_pool" "primary_nodes" {
-  name       = "${var.cluster_name}-node-pool"
-  location   = "${var.region}-a"
-  cluster    = google_container_cluster.primary.name
-  
+  name     = "${var.cluster_name}-node-pool"
+  location = "${var.region}-a"
+  cluster  = google_container_cluster.primary.name
+
   autoscaling {
     min_node_count = 1
     max_node_count = 3
