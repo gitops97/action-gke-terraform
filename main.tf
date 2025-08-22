@@ -85,11 +85,15 @@ resource "google_container_node_pool" "primary_nodes" {
   name       = "${var.cluster_name}-node-pool"
   location   = "${var.region}-a"
   cluster    = google_container_cluster.primary.name
-  node_count = 1
+  
+  autoscaling {
+    min_node_count = 1
+    max_node_count = 3
+  }
 
   node_config {
-    machine_type = "e2-small"
-    disk_size_gb = 10
+    machine_type = "e2-medium"
+    disk_size_gb = 12
     disk_type    = "pd-standard"
 
     oauth_scopes = [

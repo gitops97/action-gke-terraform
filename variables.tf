@@ -31,11 +31,11 @@ variable "min_nodes" {
 variable "max_nodes" {
   description = "Maximum number of nodes"
   type        = number
-  default     = 2
+  default     = 3
 }
 
-variable "desired_nodes" {
-  description = "Desired number of nodes"
+variable "disk_size_gb" {
+  description = "Disk size in GB for each node"
   type        = number
-  default     = 1
+  default     = 12
 }
