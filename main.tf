@@ -88,7 +88,7 @@ resource "google_container_node_pool" "primary_nodes" {
   node_count = 1
 
   node_config {
-    machine_type = "e2-micro"
+    machine_type = "e2-small"
     disk_size_gb = 10
     disk_type    = "pd-standard"
 
